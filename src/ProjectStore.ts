@@ -29,7 +29,7 @@ declare class ClipboardItem {
 
 function createSourceLayer(source: GlueSourceType): SourceLayer {
   if (source instanceof HTMLVideoElement) {
-    source.muted = true;
+    source.muted = false;
   }
 
   const settings: Record<string, any> = {};
@@ -224,6 +224,16 @@ class ProjectStore {
         this.loading = false;
         return;
       }
+      
+      this.currentProject.layers = [sourceLayer, ...this.currentProject.layers];
+      this.currentProject.selectedLayer = sourceLayer.id;
+      this.currentProject.clips[sourceLayer.id] = [
+        {
+          id: uuid(),
+          start: 0,
+          end: this.maxClipEnd,
+        },
+      ];
 
       if (source instanceof HTMLVideoElement) {
         if (!source.duration) {
@@ -237,15 +247,7 @@ class ProjectStore {
         this.currentProject.clips[sourceLayer.id][0].duration = source.duration;
       }
 
-      this.currentProject.layers = [sourceLayer, ...this.currentProject.layers];
-      this.currentProject.selectedLayer = sourceLayer.id;
-      this.currentProject.clips[sourceLayer.id] = [
-        {
-          id: uuid(),
-          start: 0,
-          end: this.maxClipEnd,
-        },
-      ];
+      
 
       this.loading = false;
       this.requestPreviewRender();
@@ -380,6 +382,10 @@ class ProjectStore {
         }
       } else if (points?.length > 0) {
         value = getY(this.currentProject.time, points);
+      }
+      
+      if(setting.type === FilterSettingType.TIME){
+        return this.currentProject.time;
       }
     }
 

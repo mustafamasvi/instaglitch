@@ -20,6 +20,7 @@ export enum FilterSettingType {
   BOOLEAN = 'boolean',
   SELECT = 'select',
   ANGLE = 'angle',
+  TIME = "time"
 }
 
 export interface FilterSettingSelectValue {
