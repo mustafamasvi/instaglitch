@@ -1,0 +1,15 @@
+{
+    "id": "color",
+    "name": "Blue Colo ",
+    "settings": [
+        {
+          "id": "blue",
+          "defaultValue": 0.0,
+          "key": "blue",
+          "name": "blue",
+          "type": "time"
+        }
+      ],
+    "fragmentShader": "precision highp float;\nvoid main() {\n vec2 uv = gl_FragCoord.xy / iResolution.xy;\n gl_FragColor = vec4(uv.x, uv.y, blue, 1.0);\n}"
+  }
+  

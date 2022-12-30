@@ -1,0 +1,15 @@
+{
+    "id": "Flip",
+    "name": "Flip",
+    "settings": [
+        {
+          "id": "iTime",
+          "defaultValue": 0.5,
+          "key": "iTime",
+          "name": "iTime",
+          "type": "time"
+        }
+      ],
+    "fragmentShader": "#define r 0.3\n #define rep 3.0\n \n void main()\n {\n     float R = r * iResolution.x; \n     float v = 1.5 * iResolution.x / rep;\n     float time = fract(iTime / rep);\n     vec2 s = gl_FragCoord.xy;     \n     vec2 u = normalize(vec2(5.0, 1.0));     \n     vec2 o = vec2(time *rep* v, 0.0);     \n     float d = dot(s - o, u);     \n     vec2 h = s - u * d; \n     bool onCylinder = abs(d) < R;\n     float angle = onCylinder ? asin(d / R) : 0.0;\n     bool neg = d < 0.0;\n     float a0 = 3.141592653 + angle;\n     float a = onCylinder ? (neg ? -angle : (3.141592653 + angle)) : 0.0; \n     float l = R * a;\n     vec2 p = h - u * l;     \n     bool outside = any(lessThan(p, vec2(0.0))) || any(greaterThan(p, iResolution.xy));    \n     bool previous = (!onCylinder ||outside) && neg;\n     vec4 color = (previous ? mix(0.1, 1.0, time): 1.0) * texture2D(iTexture, (!onCylinder || outside ? gl_FragCoord.xy : p) / iResolution.xy);\n     l = R * a0; \n     p = h - u * l;\n     outside = any(lessThan(p, vec2(0.0))) || any(greaterThan(p, iResolution.xy));\n     color = outside || !onCylinder ? color : texture2D(iTexture, p / iResolution.xy);\n     gl_FragColor = color;\n }"
+  }
+  
