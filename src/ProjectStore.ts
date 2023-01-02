@@ -17,6 +17,7 @@ import {
   Project,
   TLayer,
   FilterSetting,
+  AudioLayer,
 } from './types';
 import { createFilterLayer } from './filters/functions';
 import { getY } from './components/timeline/Utils';
@@ -45,6 +46,28 @@ function createSourceLayer(source: GlueSourceType): SourceLayer {
     visible: true,
     settings,
   };
+}
+
+function createAudioSourceLayer(source: HTMLAudioElement): AudioLayer {
+  const settings: Record<string, any> = {};
+
+  for (const setting of sourceSettings) {
+    settings[setting.key] = setting.defaultValue;
+  }
+
+  return {
+    id: uuid(),
+    type: LayerType.AUDIO,
+    source,
+    visible: true,
+    settings,
+  };
+}
+
+function createAudioSource(url: string, type: 'audio'){
+  const source = document.createElement('audio');
+  source.src = url;
+  return source;
 }
 
 function createSource(url: string, type: 'image' | 'video') {
@@ -129,19 +152,23 @@ class ProjectStore {
   handleFile(file: File, mode: FileInputMode = FileInputMode.NEW) {
     this.loading = true;
     const url = URL.createObjectURL(file);
-    const type = file.type.startsWith('video') ? 'video' : 'image';
+    const type = file.type.startsWith('video') ? 'video' : file.type.startsWith('audio') ? 'audio' :  'image';
     if (mode === FileInputMode.NEW) {
       this.addProjectFromURL(url, type, file.name);
     } else {
-      this.addSourceLayer(url, type, file.name);
+      this.addLayer(url, type, file.name);
     }
   }
 
   addProjectFromURL(
     url: string,
-    type: 'image' | 'video',
+    type: 'image' | 'video' | 'audio',
     filename = 'untitled.jpg'
   ) {
+    if(type === 'audio'){
+     //TODO
+     throw new Error('Audio no supported')
+    }
     const source = createSource(url, type);
     this.addProjectFromSource(source, filename);
   }
@@ -211,7 +238,52 @@ class ProjectStore {
     }
   }
 
-  addSourceLayer(url: string, type: 'image' | 'video', name?: string) {
+  addLayer(url: string, type:  'image' | 'video' | 'audio', name?: string) {
+    type == 'audio'? this.addAudioLayer(url, type, name): this.addSourceLayer1(url, type, name);
+  }
+
+  private addAudioLayer(url: string, type: 'audio', name: string | undefined){
+    const source = createAudioSource(url, type);
+
+    const sourceLayer = createAudioSourceLayer(source);
+    sourceLayer.name = name;
+
+    this.loading = true;
+
+    const onload = () => {
+      if (!this.currentProject) {
+        this.loading = false;
+        return;
+      }
+
+      if (!source.duration) {
+        this.error = 'Corrupted audio file.';
+        this.loading = false;
+        return;
+      }
+
+      this.currentProject.layers = [sourceLayer, ...this.currentProject.layers];
+      this.currentProject.selectedLayer = sourceLayer.id;
+      this.currentProject.clips[sourceLayer.id] = [
+        {
+          id: uuid(),
+          start: 0,
+          end: source.duration,
+          absoluteStart: 0,
+          duration:source.duration
+        },
+      ];
+
+      this.loading = false;
+      this.requestPreviewRender();
+    };
+
+    source.addEventListener('loadeddata', onload);
+    source.load();
+  }
+
+
+  private addSourceLayer1(url: string, type: 'image' | 'video', name?: string) {
     const source = createSource(url, type);
 
     const sourceLayer = createSourceLayer(source);
@@ -224,7 +296,7 @@ class ProjectStore {
         this.loading = false;
         return;
       }
-      
+
       this.currentProject.layers = [sourceLayer, ...this.currentProject.layers];
       this.currentProject.selectedLayer = sourceLayer.id;
       this.currentProject.clips[sourceLayer.id] = [
@@ -247,7 +319,7 @@ class ProjectStore {
         this.currentProject.clips[sourceLayer.id][0].duration = source.duration;
       }
 
-      
+
 
       this.loading = false;
       this.requestPreviewRender();
@@ -383,7 +455,7 @@ class ProjectStore {
       } else if (points?.length > 0) {
         value = getY(this.currentProject.time, points);
       }
-      
+
       if(setting.type === FilterSettingType.TIME){
         return this.currentProject.time;
       }
@@ -418,8 +490,8 @@ class ProjectStore {
     return false;
   }
 
-  getVideoTime(layer: SourceLayer) {
-    if (!this.currentProject || !(layer.source instanceof HTMLVideoElement)) {
+  getVideoTime(layer: SourceLayer|AudioLayer) {
+    if (!this.currentProject || !(layer.source instanceof (HTMLVideoElement || HTMLAudioElement))) {
       return 0;
     }
 
@@ -438,6 +510,7 @@ class ProjectStore {
         this.currentProject.time <= clip.end &&
         typeof clip.absoluteStart === 'number'
       ) {
+        console.log(this.currentProject.time - clip.absoluteStart)
         return this.currentProject.time - clip.absoluteStart;
       }
     }
@@ -479,7 +552,7 @@ class ProjectStore {
         }
 
         glue.program(layer.filter.id)?.apply();
-      } else {
+      } else if(layer.type === LayerType.SOURCE) {
         if (!glue.hasTexture(layer.id)) {
           if (!glueIsSourceLoaded(layer.source)) {
             continue;
@@ -516,7 +589,17 @@ class ProjectStore {
           opacity: settings.opacity,
           mode: settings.mode,
         });
-      }
+      } 
+      // else {
+      //   if (layer.source instanceof HTMLAudioElement) {
+      //     try {
+      //       const time = this.getVideoTime(layer);
+      //       if (Math.abs(layer.source.currentTime - time) > 1) {
+      //         layer.source.currentTime = time;
+      //       }
+      //     } catch {}
+      //   }
+      // }
     }
 
     glue.render();
@@ -572,13 +655,18 @@ class ProjectStore {
     this.requestPreviewRender();
 
     for (const layer of this.currentProject.layers) {
-      if (layer.type !== LayerType.SOURCE) {
+      if (layer.type === LayerType.FILTER) {
         continue;
       }
-
+      //TODO: Play on the base of active layer from the clips start, end
       if (layer.source instanceof HTMLVideoElement) {
         layer.source.play();
       }
+
+      if (layer.source instanceof HTMLAudioElement) {
+        layer.source.play();
+      }
+
     }
   }
 
@@ -590,11 +678,15 @@ class ProjectStore {
     this.currentProject.playing = false;
 
     for (const layer of this.currentProject.layers) {
-      if (layer.type !== LayerType.SOURCE) {
+      if (layer.type === LayerType.FILTER) {
         continue;
       }
 
       if (layer.source instanceof HTMLVideoElement) {
+        layer.source.pause();
+      }
+
+      if (layer.source instanceof HTMLAudioElement) {
         layer.source.pause();
       }
     }
@@ -607,13 +699,14 @@ class ProjectStore {
 
     this.currentProject.time = time;
     for (const layer of this.currentProject.layers) {
-      if (layer.type !== LayerType.SOURCE) {
+      if (layer.type === LayerType.FILTER) {
         continue;
       }
-
-      if (layer.source instanceof HTMLVideoElement) {
+      
+      if ((layer.source instanceof HTMLVideoElement) || (layer.source instanceof HTMLAudioElement) ) {
         layer.source.currentTime = this.getVideoTime(layer);
       }
+      
     }
 
     this.requestPreviewRender();
