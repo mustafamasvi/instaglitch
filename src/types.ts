@@ -3,7 +3,8 @@ import { GlueSourceType } from 'fxglue';
 export enum LayerType {
   SOURCE,
   FILTER,
-  AUDIO
+  AUDIO, 
+  TEXT
 }
 
 export interface Layer {
@@ -59,6 +60,13 @@ export interface FilterLayer extends Layer {
   readonly filter: Filter;
 }
 
+export interface TextLayer extends Layer {
+  id: string;
+  type: LayerType.TEXT;
+  name: string;
+  readonly source:HTMLCanvasElement 
+}
+
 export interface SourceLayer extends Layer {
   id: string;
   type: LayerType.SOURCE;
@@ -73,7 +81,7 @@ export interface AudioLayer extends Layer {
   name?: string;
 }
 
-export type TLayer = FilterLayer | SourceLayer | AudioLayer ;
+export type TLayer = FilterLayer | SourceLayer | AudioLayer | TextLayer;
 
 export interface Project {
   id: string;

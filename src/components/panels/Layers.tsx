@@ -139,6 +139,10 @@ export const Layers: React.FC = observer(() => {
           <BsPlus />
           <span>File</span>
         </button>
+        <button onClick={() => projectStore.addTextLayer("sd")}>
+          <BsPlus />
+          <span>Text</span>
+        </button>
         <button onClick={() => projectStore.removeCurrentLayer()}>
           <BsTrash />
           <span>Delete layer</span>

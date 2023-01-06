@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { webmFixDuration } from 'webm-fix-duration';
 import {
   GlueCanvas,
+  GlueCanvas2D,
   glueIsSourceLoaded,
   glueGetSourceDimensions,
   GlueSourceType,
@@ -18,6 +19,7 @@ import {
   TLayer,
   FilterSetting,
   AudioLayer,
+  TextLayer,
 } from './types';
 import { createFilterLayer } from './filters/functions';
 import { getY } from './components/timeline/Utils';
@@ -108,7 +110,9 @@ class ProjectStore {
   modal: string | undefined = undefined;
   error: string | undefined = undefined;
   glueCanvas = new GlueCanvas();
+  gluecanvas2d = new GlueCanvas2D();
   canvas = this.glueCanvas.canvas;
+  canvas2d = this.gluecanvas2d.canvas;
   glue = this.glueCanvas.glue;
   gl = this.glueCanvas.gl;
   exportQuality = 0.7;
@@ -231,15 +235,16 @@ class ProjectStore {
     } else {
       if (source instanceof HTMLImageElement) {
         source.onload = onload;
-      } else {
+      } else if((source instanceof HTMLVideoElement)||(source instanceof HTMLAudioElement)){
         source.addEventListener('loadeddata', onload);
         source.load();
       }
+
     }
   }
 
   addLayer(url: string, type:  'image' | 'video' | 'audio', name?: string) {
-    type == 'audio'? this.addAudioLayer(url, type, name): this.addSourceLayer1(url, type, name);
+    type == 'audio'? this.addAudioLayer(url, type, name): this.addSourceLayer(url, type, name);
   }
 
   private addAudioLayer(url: string, type: 'audio', name: string | undefined){
@@ -283,7 +288,7 @@ class ProjectStore {
   }
 
 
-  private addSourceLayer1(url: string, type: 'image' | 'video', name?: string) {
+  private addSourceLayer(url: string, type: 'image' | 'video', name?: string) {
     const source = createSource(url, type);
 
     const sourceLayer = createSourceLayer(source);
@@ -354,6 +359,43 @@ class ProjectStore {
 
   get currentProject() {
     return this.projects.find(project => project.id === this.currentProjectId);
+  }
+
+  createTextLayer(text:any) : TextLayer {
+    const settings: Record<string, any> = {};
+    for (const setting of sourceSettings) {
+      settings[setting.key] = setting.defaultValue;
+    }
+
+    this.gluecanvas2d.gl.font = "bold 18px Arial" 
+    this.gluecanvas2d.gl.fillText("Text", (this.canvas2d.width / 2) - 17, (this.canvas2d.height / 2) + 8);
+
+    return {
+      id: uuid(),
+      type: LayerType.TEXT,
+      settings,
+      visible: true,
+      source: this.gluecanvas2d.canvas,
+      name : 'Hello World'
+    };
+  }
+
+  addTextLayer(text:any){
+    if (!this.currentProject) {
+      return;
+    }
+    const layer = this.createTextLayer(text);
+    this.currentProject.layers = [layer, ...this.currentProject.layers];
+    this.currentProject.selectedLayer = layer.id;
+    this.currentProject.clips[layer.id] = [
+      {
+        id: uuid(),
+        start: 0,
+        end: this.maxClipEnd,
+      },
+    ];
+    this.requestPreviewRender();
+    this.modal = undefined;
   }
 
   addFilter(filter: Filter) {
@@ -526,7 +568,7 @@ class ProjectStore {
     const { width, height } = this.currentProject;
     const scale = calculateScale(width, height, maxSize);
     this.glueCanvas.setSize(width * scale, height * scale);
-
+    this.gluecanvas2d.setSize(width * scale,height * scale);
     const layers = this.currentProject.layers
       .filter(layer => this.isLayerVisible(layer))
       .reverse();
@@ -552,7 +594,8 @@ class ProjectStore {
         }
 
         glue.program(layer.filter.id)?.apply();
-      } else if(layer.type === LayerType.SOURCE) {
+      } else if((layer.type === LayerType.SOURCE) || (layer.type == LayerType.TEXT)) 
+      {
         if (!glue.hasTexture(layer.id)) {
           if (!glueIsSourceLoaded(layer.source)) {
             continue;
@@ -561,7 +604,7 @@ class ProjectStore {
           glue.registerTexture(layer.id, layer.source);
         }
 
-        if (layer.source instanceof HTMLVideoElement) {
+        if (layer.type === LayerType.SOURCE && layer.source instanceof HTMLVideoElement) {
           try {
             const time = this.getVideoTime(layer);
             if (Math.abs(layer.source.currentTime - time) > 1) {
@@ -590,16 +633,6 @@ class ProjectStore {
           mode: settings.mode,
         });
       } 
-      // else {
-      //   if (layer.source instanceof HTMLAudioElement) {
-      //     try {
-      //       const time = this.getVideoTime(layer);
-      //       if (Math.abs(layer.source.currentTime - time) > 1) {
-      //         layer.source.currentTime = time;
-      //       }
-      //     } catch {}
-      //   }
-      // }
     }
 
     glue.render();
@@ -655,7 +688,7 @@ class ProjectStore {
     this.requestPreviewRender();
 
     for (const layer of this.currentProject.layers) {
-      if (layer.type === LayerType.FILTER) {
+      if (layer.type === LayerType.FILTER || layer.type === LayerType.TEXT) {
         continue;
       }
       //TODO: Play on the base of active layer from the clips start, end
@@ -678,7 +711,7 @@ class ProjectStore {
     this.currentProject.playing = false;
 
     for (const layer of this.currentProject.layers) {
-      if (layer.type === LayerType.FILTER) {
+      if (layer.type === LayerType.FILTER || layer.type === LayerType.TEXT) {
         continue;
       }
 
@@ -699,7 +732,7 @@ class ProjectStore {
 
     this.currentProject.time = time;
     for (const layer of this.currentProject.layers) {
-      if (layer.type === LayerType.FILTER) {
+      if (layer.type === LayerType.FILTER || layer.type === LayerType.TEXT) {
         continue;
       }
       
