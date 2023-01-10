@@ -239,7 +239,7 @@ class ProjectStore {
   }
 
   addLayer(url: string, type:  'image' | 'video' | 'audio', name?: string) {
-    type == 'audio'? this.addAudioLayer(url, type, name): this.addSourceLayer1(url, type, name);
+    type === 'audio'? this.addAudioLayer(url, type, name): this.addSourceLayer1(url, type, name);
   }
 
   private addAudioLayer(url: string, type: 'audio', name: string | undefined){
