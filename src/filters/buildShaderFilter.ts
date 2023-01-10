@@ -32,6 +32,11 @@ export function buildShaderFilter(props: any): Filter {
     for (const setting of props.settings) {
       shaderPrefix += `uniform ${uniformType(setting.type)} ${setting.key};\n`;
     }
+    
+    props.settings.push({ id: "iTexture",
+    key: "iTexture",
+    name: "iTexture",
+    type: FilterSettingType.Channel})
   }
 
   return {
