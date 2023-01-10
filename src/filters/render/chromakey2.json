@@ -1,0 +1,72 @@
+{
+    "id": "chromakey 2",
+    "name": "Chroma Key Single Layer",
+    "settings": [
+      {
+        "id": "AMPFIX_u_center_x",
+        "key": "AMPFIX_u_center_x",
+        "defaultValue": 0,
+        "name": "AMPFIX_u_center_x",
+        "type": "integer",
+        "minValue": -1000,
+        "maxValue": 1000,
+        "step": 100
+      },
+      {
+        "id": "AMPFIX_u_center_y",
+        "key": "AMPFIX_u_center_y",
+        "defaultValue": 0,
+        "name": "AMPFIX_u_center_y",
+        "type": "integer",
+        "minValue": -1000,
+        "maxValue": 1000,
+        "step": 100
+      },
+      {
+        "id": "AMPFIX_u_size",
+        "key": "AMPFIX_u_size",
+        "defaultValue": 1000,
+        "name": "AMPFIX_u_size",
+        "type": "integer",
+        "minValue": -0,
+        "maxValue": 1000,
+        "step": 10
+      },
+      {
+        "id": "AMPFIX_u_color_pick_mode",
+        "key": "AMPFIX_u_color_pick_mode",
+        "defaultValue": false,
+        "name": "AMPFIX_u_color_pick_mode",
+        "type": "boolean"
+      },
+      {
+        "id": "AMPFIX_u_min_distance",
+        "key": "AMPFIX_u_min_distance",
+        "defaultValue": 0,
+        "name": "AMPFIX_u_min_distance",
+        "type": "float",
+        "minValue": 0,
+        "maxValue": 100,
+        "step": 10
+      },
+      {
+        "id": "AMPFIX_u_max_distance",
+        "key": "AMPFIX_u_max_distance",
+        "defaultValue": 0,
+        "name": "AMPFIX_u_max_distance",
+        "type": "float",
+        "minValue": 0,
+        "maxValue": 100,
+        "step": 10
+      },
+      {
+        "id": "AMPFIX_u_color1",
+        "defaultValue": "#00b140",
+        "key": "AMPFIX_u_color1",
+        "name": "AMPFIX_u_color1",
+        "type": "color"
+      }
+    ],
+    "fragmentShader" : "vec4 INPUT(vec2 tc)\n {\n vec4 fragColor = texture2D(iTexture, tc);\n fragColor.rgb *= fragColor.a;\n \n return fragColor;\n }\n \n vec4 AMPFIX_GammaCompression(vec4 fragColor)\n {\n return fragColor;\n }\n \n vec4 AMPFIX_GammaExpansion(vec4 fragColor)\n {\n return fragColor;\n }\n \n bool AMPFIX_inBounds (vec2 p, vec2 boundMin, vec2 boundMax)\n {\n return all(lessThan(boundMin, p)) && all(lessThan(p, boundMax));\n }\n \n vec4 AMPFIX_getChromaKeyedTexture(vec4 texRGB)\n {\n vec4 diff = texRGB - AMPFIX_u_color1;\n float inner = float(AMPFIX_u_min_distance) >= float(AMPFIX_u_max_distance) ? float(AMPFIX_u_max_distance) : float(AMPFIX_u_min_distance);\n \n float l = dot(diff.rgb, diff.rgb);\n \n float alpha = smoothstep(inner * 0.01, float(AMPFIX_u_max_distance) * 0.01 + 0.001, l * 1.4);\n \n return vec4(texRGB.rgb, alpha);\n }\n \n vec4 AMPFIX_targetColor2Gray(vec4 fragColor)\n {\n if ( fragColor.a < 0.2)\n {\n fragColor.a = 0.0;\n return fragColor;\n }\n \n vec4 tmpColor = AMPFIX_u_color1;\n if ( tmpColor.r > tmpColor.g * 1.2 && tmpColor.r > tmpColor.b * 1.2 )\n {\n \n if ( fragColor.r > fragColor.g * 1.2 && fragColor.r > fragColor.b * 1.2 )\n {\n     return fragColor.rrra;\n }\n }\n else if ( tmpColor.g > tmpColor.r * 1.2 && tmpColor.g > tmpColor.b * 1.2 )\n {\n \n if ( fragColor.g > fragColor.r  && fragColor.g > fragColor.b  )\n {\n     return fragColor.ggga;\n }\n }\n else if ( tmpColor.b > tmpColor.r * 1.2 && tmpColor.b > tmpColor.g * 1.2 )\n {\n \n if ( fragColor.b > fragColor.r * 1.2 && fragColor.b > fragColor.g * 1.2 )\n {\n     return fragColor.bbba;\n }\n }\n \n return fragColor;\n }\n \n vec4 FUNCNAME(vec2 tc)\n {\n vec2 uv = tc;\n \n if ( AMPFIX_u_color_pick_mode )\n {\n return INPUT(tc);\n }\n \n float delta = float(AMPFIX_u_size) / 2000.0;\n float ratio = 1.0/(delta*2.0);\n vec2 leftTop = vec2(float(AMPFIX_u_center_x), float(AMPFIX_u_center_y)) * 0.001;\n vec2 center = leftTop + delta;\n \n vec2 rightBottom = center + delta;\n \n vec4 fragColor = vec4(0.0);\n if ( AMPFIX_inBounds(uv, leftTop, rightBottom) )\n {\n vec2 newCenter = vec2(leftTop.x, leftTop.y) * ratio;\n vec4 smallImg = INPUT(tc * ratio - newCenter);\n if ( smallImg.a == 0.0 )\n {\n     return smallImg;\n }\n \n smallImg = AMPFIX_GammaCompression(smallImg);\n fragColor = AMPFIX_getChromaKeyedTexture(smallImg);\n fragColor = AMPFIX_targetColor2Gray(fragColor);\n fragColor = AMPFIX_GammaExpansion(fragColor);\n }\n fragColor.rgb *= fragColor.a;\n return fragColor;\n }\n \n void main()\n {\n vec2 uv = gl_FragCoord.xy / iResolution.xy;\n gl_FragColor = FUNCNAME(uv);\n }"
+  }
+  

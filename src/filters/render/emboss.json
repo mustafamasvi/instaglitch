@@ -1,0 +1,33 @@
+{
+    "id": "emboss",
+    "name": "Emboss",
+    "settings": [
+      {
+        "id": "u_brightness",
+        "key": "u_brightness",
+        "name": "Brightness",
+        "defaultValue": 50,
+        "type": "integer",
+        "minValue": 0,
+        "maxValue": 100
+      },
+      {
+        "id": "u_intensity",
+        "key": "u_intensity",
+        "name": "Intensity",
+        "defaultValue": 10,
+        "type": "integer",
+        "minValue": 0,
+        "maxValue": 100
+      },
+      {
+        "id": "u_color1",
+        "defaultValue": "#00b27f",
+        "key": "u_color1",
+        "name": "Color",
+        "type": "color"
+      }
+    ],
+    "fragmentShader": "vec4 INPUT(vec2 tc)\n {\n return texture2D(iTexture, tc);\n }\n \n float RGBToLuminance(vec3 rgb)\n {\n return 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;\n }\n \n vec3 ColourAtBuffer(vec2 coord)\n {\n vec2 uv = coord / iResolution.xy;\n return INPUT(uv).rgb;\n }\n \n vec4 EmbossColor(vec2 fragCoord)\n {\n float p1 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(-1.0, 1.0)));\n float p2 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(0.0, 1.0)));\n float p3 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(1.0, 1.0)));\n float p4 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(-1.0, 0.0)));\n float p5 = RGBToLuminance(ColourAtBuffer(fragCoord));\n float p6 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(1.0, 0.0)));\n float p7 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(-1.0, -1.0)));\n float p8 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(0.0, -1.0)));\n float p9 = RGBToLuminance(ColourAtBuffer(fragCoord + vec2(1.0, -1.0)));\n \n float GX = (p1 + 2.0 * p2 + p3) - (p7 + 2.0 * p8 + p9);\n float GY = (p3 + 2.0 * p6 + p9) - (p1 + 2.0 * p4 + p7);\n \n float G = sqrt(GX * GX + GY * GY);\n \n return vec4(ColourAtBuffer(fragCoord), G);\n }\n \n vec4 FUNCNAME(vec2 tc)\n {\n vec2 center = tc;\n \n float heightScale = float(u_intensity) * 0.1;\n float hN = EmbossColor(center + vec2(0.0, 1.0)).a * heightScale; // North\n vec3  hC = EmbossColor(center).rgb; // center\n float hS = EmbossColor(center + vec2(0.0, -1.0)).a * heightScale; // South\n float hE = EmbossColor(center + vec2(1.0, 0.0)).a * heightScale; // East\n float hW = EmbossColor(center + vec2(-1.0, 0.0)).a * heightScale; // West\n \n vec3 average = normalize(vec3((hW - hE), (hN - hS), 2.0));\n vec3 normal = average;\n normal *= 1.2;\n \n float NdotL = dot(normal, vec3(float(u_brightness) * 0.01));\n \n vec4 fragColor = vec4(0.0);\n \n fragColor = vec4(u_color1.rgb * NdotL, 1.0);\n \n return fragColor;\n }\n \n void main()\n {\n vec2 uv = gl_FragCoord.xy; \n gl_FragColor = FUNCNAME(uv);\n }"
+  }
+  

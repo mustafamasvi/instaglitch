@@ -229,7 +229,7 @@ class ProjectStore {
     if (glueIsSourceLoaded(source)) {
       onload();
     } else {
-      if (source instanceof HTMLImageElement) {
+      if (source instanceof HTMLImageElement || source instanceof HTMLCanvasElement) {
         source.onload = onload;
       } else {
         source.addEventListener('loadeddata', onload);
@@ -459,8 +459,10 @@ class ProjectStore {
       if(setting.type === FilterSettingType.TIME){
         return this.currentProject.time;
       }
-    }
 
+    }
+    // console.log('L',{...layer});
+    // console.log("SL", {...this.currentProject})
     return value;
   }
 
@@ -510,7 +512,7 @@ class ProjectStore {
         this.currentProject.time <= clip.end &&
         typeof clip.absoluteStart === 'number'
       ) {
-        console.log(this.currentProject.time - clip.absoluteStart)
+        //console.log(this.currentProject.time - clip.absoluteStart)
         return this.currentProject.time - clip.absoluteStart;
       }
     }

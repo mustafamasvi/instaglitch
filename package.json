@@ -14,6 +14,7 @@
     "@types/react-color": "^3.0.6",
     "@types/react-dom": "^18.0.9",
     "@types/uuid": "^8.3.4",
+    "axios": "^1.2.2",
     "clsx": "^1.2.1",
     "fxglue": "^0.0.11",
     "husky": "^8.0.2",

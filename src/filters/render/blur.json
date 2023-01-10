@@ -1,0 +1,24 @@
+{
+    "id": "blur",
+    "name": "Blur",
+    "settings": [
+      {
+        "id": "u_intensity",
+        "key": "u_intensity",
+        "name": "Intensity",
+        "defaultValue": 10,
+        "type": "integer",
+        "minValue": 0,
+        "maxValue": 100
+      },
+      {
+        "id": "u_angle",
+        "defaultValue": 0,
+        "key": "u_angle",
+        "name": "Angle",
+        "type": "angle"
+      }
+    ],
+    "fragmentShader": "vec4 INPUT(vec2 tc)\n {\n tc.y = 1.0 - tc.y;\n vec4 fragColor = texture2D(iTexture, tc);\n fragColor.rgb *= fragColor.a;\n \n return fragColor;\n }\n \n vec4 tex2D(sampler2D Tex, vec2 tc)\n {\n tc.y = 1.0 - tc.y;\n vec4 fragColor = texture2D(Tex, tc);\n fragColor.rgb *= fragColor.a;\n \n return fragColor;\n }\n \n float map(float Imin,float Imax,float Omin,float Omax,float x)\n {\n return ((x - Imin) * (Omax - Omin) / (Imax - Imin)) + Omin;\n }\n \n vec4 GammaCompression(vec4 fragColor)\n {\n return fragColor;\n }\n \n vec4 GammaExpansion(vec4 fragColor)\n {\n return fragColor;\n }\n \n vec4 GetGammaCompressionTex(vec2 uv)\n {\n vec4 fragColor = INPUT(uv);\n \n return GammaCompression(fragColor);\n }\n \n vec4 dirBlur(vec2 uv, vec2 angle)\n {\n const int samples = 50;\n const float delta = 2.0 / float(samples);\n \n \n vec4 acc = vec4(0);\n float count = 0.0;\n for(float i = -1.0; i <= 1.0; i += delta)\n {\n acc += GetGammaCompressionTex(uv - vec2(angle.x * i, angle.y * i));\n count++;\n }\n \n acc /= count;\n \n return GammaExpansion(clamp(acc, 0.0, 1.0));\n \n }\n \n vec4 FUNCNAME(vec2 tc)\n {\n float strength = map(0.0, 100.0, 0.0, 0.5, float(u_intensity));\n \n float r = radians(-float(u_angle));\n vec2 direction = vec2(sin(r), cos(r));\n \n vec4 fragColor = dirBlur(tc, strength * direction);\n \n return fragColor;\n }\n \n void main()\n {\n vec2 uv = gl_FragCoord.xy / iResolution.xy;\n uv.y = 1.0 - uv.y;\n \n gl_FragColor = FUNCNAME(uv);\n \n \n }"
+  }
+  

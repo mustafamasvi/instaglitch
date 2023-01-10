@@ -19,8 +19,9 @@ function uniformType(type: FilterSettingType) {
       return 'int';
     case FilterSettingType.COLOR:
       return 'vec4';
+    case FilterSettingType.Channel:
+      return 'sampler2D';
   }
-
   return 'unknown';
 }
 

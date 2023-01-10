@@ -31,12 +31,12 @@
       "selectValues": [
         {
           "id": "horizontal",
-          "name": "Horizontal",
+          "label": "Horizontal",
           "value": 0
         },
         {
           "id": "vertical",
-          "name": "Vertical",
+          "label": "Vertical",
           "value": 1
         }
       ]
@@ -56,22 +56,22 @@
       "selectValues": [
         {
           "id": "stretch",
-          "name": "Stretch",
+          "label": "Stretch",
           "value": 0
         },
         {
           "id": "repeat",
-          "name": "Repeat",
+          "label": "Repeat",
           "value": 1
         },
         {
           "id": "mirrored_repeat",
-          "name": "Mirorred repeat",
+          "label": "Mirorred repeat",
           "value": 2
         },
         {
           "id": "clip",
-          "name": "Clip",
+          "label": "Clip",
           "value": 3
         }
       ]
