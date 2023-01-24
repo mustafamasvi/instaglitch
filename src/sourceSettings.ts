@@ -1,4 +1,4 @@
-import { GlueBlendMode } from 'fxglue';
+import { GlueBlendMode } from './fxGlue';
 import { FilterSetting, FilterSettingType } from './types';
 
 export const sourceSettings: FilterSetting[] = [

@@ -1,7 +1,5 @@
-import {
-  defaultFragmentShader,
-  defaultVertexShader,
-} from 'fxglue/lib/GlueShaderSources';
+
+import { defaultFragmentShader, defaultVertexShader } from '../fxGlue/GlueShaderSources';
 import { Filter, FilterSettingType } from '../types';
 
 function uniformType(type: FilterSettingType) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { glueIsWebGLAvailable } from 'fxglue';
+import { glueIsWebGLAvailable } from './fxGlue';
 
 import './App.scss';
 

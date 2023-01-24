@@ -7,7 +7,7 @@ import {
   glueIsSourceLoaded,
   glueGetSourceDimensions,
   GlueSourceType,
-} from 'fxglue';
+} from './fxGlue';
 
 import {
   Filter,
@@ -457,7 +457,7 @@ class ProjectStore {
       }
 
       if(setting.type === FilterSettingType.TIME){
-        return this.currentProject.time;
+        value = this.currentProject.time;
       }
 
     }
@@ -547,9 +547,11 @@ class ProjectStore {
 
         if (layer.filter.settings) {
           for (const setting of layer.filter.settings) {
-            glue
+            //if(setting.name !== 'iTexture') {
+              glue
               .program(layer.filter.id)
               ?.uniforms.set(setting.key, this.getLayerSetting(layer, setting));
+            //}
           }
         }
 
