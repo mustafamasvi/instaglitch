@@ -1,7 +1,5 @@
-import {
-  defaultFragmentShader,
-  defaultVertexShader,
-} from 'fxglue/lib/GlueShaderSources';
+
+import { defaultFragmentShader, defaultVertexShader } from '../fxGlue/GlueShaderSources';
 import { Filter, FilterSettingType } from '../types';
 
 function uniformType(type: FilterSettingType) {
@@ -32,6 +30,11 @@ export function buildShaderFilter(props: any): Filter {
     for (const setting of props.settings) {
       shaderPrefix += `uniform ${uniformType(setting.type)} ${setting.key};\n`;
     }
+    
+    props.settings.push({ id: "iTexture",
+    key: "iTexture",
+    name: "iTexture",
+    type: FilterSettingType.Channel})
   }
 
   return {

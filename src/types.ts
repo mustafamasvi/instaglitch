@@ -1,4 +1,4 @@
-import { GlueSourceType } from 'fxglue';
+import { GlueSourceType } from './fxGlue';
 
 export enum LayerType {
   SOURCE,
@@ -53,6 +53,7 @@ export interface Filter {
   settings?: FilterSetting[];
   fragmentShader: string;
   vertexShader: string;
+  source?: string;
 }
 
 export interface FilterLayer extends Layer {

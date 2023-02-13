@@ -49,6 +49,17 @@ export const LayerSettings: React.FC = observer(() => {
                 projectStore.requestPreviewRender();
               }}
             >
+              {/* {layer.type === (LayerType.FILTER) && (
+                  <VarSelect
+                    path="iTexture"
+                    label="iTexture"
+                    key="iTexture"
+                    options={
+                     projectStore.currentProject.layers.filter(x=>x.type==LayerType.SOURCE).map(value => ({label: value.name || "Source", key: value.id})) || []
+                    }
+                    disabled={false}
+                  />
+              )} */}
               {settings.map(setting => {
                 if (!setting.key) {
                   return null;
@@ -146,7 +157,7 @@ export const LayerSettings: React.FC = observer(() => {
                           options={
                            projectStore.currentProject.layers.filter(x=>x.type==LayerType.SOURCE).map(value => ({label: value.name || "Source", key: value.id})) || []
                           }
-                          defaultValue={setting.defaultValue}
+                          defaultValue={projectStore.currentProject.layers.filter(x=>x.type==LayerType.SOURCE)[0].id}
                           disabled={disabled}
                         />
                       );
